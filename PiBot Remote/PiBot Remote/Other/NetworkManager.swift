@@ -22,11 +22,6 @@ class NetworkManager: NSObject {
 	
 	var session: NMSSHSession?
 	
-	private var address = "pibot.local"
-	private var username = "pi"
-	private var password = "password-oops-my-bad-password123"
-	private var port:UInt32 = 1000
-	
 	let maxReadLength = 1024
 	var ping = false
 	var startClientSwitch = true
@@ -39,6 +34,7 @@ class NetworkManager: NSObject {
 	let settings = UserDefaults.standard
 	
 	public func getAddress() -> String{
+		var address: String = "pibot.local"
 		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.hostName.toString()) as? String{
 			address = val
 		}else{
@@ -47,6 +43,7 @@ class NetworkManager: NSObject {
 		return address
 	}
 	public func getUsername() -> String{
+		var username: String = "pi"
 		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.username.toString()) as? String{
 			username = val
 		}else{
@@ -56,6 +53,7 @@ class NetworkManager: NSObject {
 	}
 	
 	public func getPassword() -> String{
+		var password: String = "example"
 		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.password.toString()) as? String{
 			password = val
 		}else{
@@ -64,6 +62,7 @@ class NetworkManager: NSObject {
 		return password
 	}
 	public func getPort() -> UInt32{
+		var port: UInt32 = 2000
 		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.port.toString()) as? UInt32{
 			port = val
 		}else{
@@ -72,7 +71,7 @@ class NetworkManager: NSObject {
 		return port
 	}
 	public func getAutoStartSSH() -> Bool{
-		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.port.toString()) as? Bool{
+		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.autoStartClient.toString()) as? Bool{
 			startClientSwitch = val
 		}else{
 			UserDefaults.standard.set(startClientSwitch, forKey: SettingsViewController.setting.autoStartClient.toString())
@@ -87,18 +86,11 @@ class NetworkManager: NSObject {
 	}
 	
 	@objc func setupConnection(){
-		getPinSettingString()
 		Thread(target: tabBar, selector: #selector(tabBar.showActivityIndicator), object: nil).start()
-		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.port.toString()) as? String{
-			port = UInt32(val)!
-		}
-		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.hostName.toString()) as? String{
-			address = val
-		}
 		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.client.toString()) as? Bool{
 			startClientSwitch = val
 		}
-		Console.log(text: "Connecting to: \(address) at port: \(port)...", level: .basic)
+		Console.log(text: "Connecting to: \(getAddress()) at port: \(getPort())...", level: .basic)
 		if(!startClientSwitch){
 			Console.log(text: "Not Starting Client as set in settings", level: .advanced)
 		}
@@ -106,7 +98,7 @@ class NetworkManager: NSObject {
 			var readStream: Unmanaged<CFReadStream>?
 			var writeStream: Unmanaged<CFWriteStream>?
 			
-			CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, address as CFString, port, &readStream, &writeStream)
+			CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, getAddress() as CFString, getPort(), &readStream, &writeStream)
 			
 			inputStream = readStream!.takeRetainedValue()
 			outputStream = writeStream!.takeRetainedValue()
@@ -126,16 +118,16 @@ class NetworkManager: NSObject {
 	private func setupSSH() -> Bool{
 		print("Setting up SSH")
 		if(session == nil){
-			session = NMSSHSession(host: address, andUsername: username)
+			session = NMSSHSession(host: getAddress(), andUsername: getUsername())
 		}
 		if(!(session?.isConnected)! && !(session?.connect())!){
-			Console.log(text: "Connection Failed because a SSH connection could not be established to \(address). Make sure the robot is powered on and is on the same network as this device.", level: .basic)
+			Console.log(text: "Connection Failed because a SSH connection could not be established to \(getAddress()). Make sure the robot is powered on and is on the same network as this device.", level: .basic)
 			tabBar.updateConnectedIcons(to: false)
 			tabBar.displayFailedConnectionAlert()
 			return false
 		}
 		if(!(session?.isAuthorized)!){
-		session?.authenticate(byPassword: password)
+		session?.authenticate(byPassword: getPassword())
 			if(!(session?.isAuthorized)!){
 				session?.disconnect()
 				Console.log(text: "SSH authentication failed, make sure \(getPassword()) is the correct password", level: .basic)
@@ -157,10 +149,10 @@ class NetworkManager: NSObject {
 	}
 	
 	public func sendSSHCommand(command: String, progressBar: UIProgressView?) -> String{
-		let tempSess = NMSSHSession(host: address, andUsername: username)
+		let tempSess = NMSSHSession(host: getAddress(), andUsername: getUsername())
 		tempSess?.connect()
 		if(tempSess?.isConnected)!{
-			tempSess?.authenticate(byPassword: password)
+			tempSess?.authenticate(byPassword: getPassword())
 			if(tempSess?.isAuthorized)!{
 				do {
 					var rv = ""
@@ -184,8 +176,10 @@ class NetworkManager: NSObject {
 	
 	@objc private func clientThread(){
 		do {
+			let command = "python Desktop/PiBotRemoteFiles/server.py \(getPort()) \(getPinSettingString())"
+			print(command)
 			print("Starting Client")
-			try	print("---------Pi Output---------\n\((session?.channel.execute("python Desktop/server.py \(port) \(getPinSettingString())"))!)---------------------------")
+			try	print("---------Pi Output---------\n\((session?.channel.execute(command))!)---------------------------")
 		} catch {
 			print("Client thread error: c\(error)")
 		}
@@ -323,7 +317,7 @@ extension NetworkManager: StreamDelegate {
 		case Stream.Event.errorOccurred:
 			print("ERROR: "+String(describing: eventCode))
 			closeTCP()
-			Console.log(text: "Connection failed because TCP connection could not be made to \(address) on port \(port)", level: .basic)
+			Console.log(text: "Connection failed because TCP connection could not be made to \(getAddress()) on port \(getPort())", level: .basic)
 			tabBar.displayFailedConnectionAlert()
 //		case Stream.Event.hasSpaceAvailable:
 //			tabBar.console(mess: "has space available")

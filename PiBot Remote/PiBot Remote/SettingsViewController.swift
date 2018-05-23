@@ -154,14 +154,14 @@ class SettingsViewController: UITableViewController{
 					data += "•"
 				}
 			}else{
-				data = "•••"
+				data = "••••••"
 			}
 		case (1,3):
 			title = "Port"
-			if let port = settings.value(forKey: SettingsViewController.setting.port.toString()) as! String?{
-				data = port
+			if let port = settings.value(forKey: SettingsViewController.setting.port.toString()) as! UInt32?{
+				data = "\(port)"
 			}else{
-				data = "1000"
+				data = "2000"
 			}
 			
 		case (2,0):
@@ -258,6 +258,7 @@ class SettingsViewController: UITableViewController{
 			break
 		}
 		tableView.deselectRow(at: indexPath, animated: true)
+		tableView.reloadData()
 	}
 	
 	func askSetting(withTitle: String, message: String, settingKey: String, numpad: Bool, pass: Bool, index: IndexPath){

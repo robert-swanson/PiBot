@@ -54,27 +54,29 @@ def main():
         for i in range(2,len(sys.argv)):
             val = sys.argv[i]
             if(i==2):
-                PWMA = val
+                PWMA = int(val)
+                print("PWMA = "+val)
             elif(i==3):
-                AIN1 = val
+                AIN1 = int(val)
             elif(i==4):
-                AIN2 = val
+                AIN2 = int(val)
             elif(i==5):
-                STBY = val
+                STBY = int(val)
             elif(i==6):
-                BIN1 = val
+                BIN1 = int(val)
             elif(i==7):
-                BIN2 = val
+                BIN2 = int(val)
             elif(i==8):
-                PWMB = val
+                PWMB = int(val)
             elif(i==9):
-                SERVO = val
+                SERVO = int(val)
             elif(i==10):
-                connected = val
+                connected = int(val)
             elif(i==11):
-                replaying = val
+                replaying = int(val)
             elif(i==12):
-                data = val
+                data = int(val)
+                print("data = "+val)
     try:
         netLoop()
     except Exception as e:
@@ -89,6 +91,18 @@ def netLoop():
     s = socket.socket()
     s.bind(('',port))
     on(data)
+
+    print(PWMA)
+    print(AIN1)
+    print(AIN2)
+    print(BIN1)
+    print(BIN2)
+    print(PWMB)
+    print(STBY)
+    print(replaying)
+    print(connected)
+    print(data)
+
     print("Listening on port " + str(port) + "...")
     s.listen(5)
     global c
@@ -263,11 +277,15 @@ def updateGPIO(lS, rS):
     GPIO.output(BIN1,rS>=0)
     GPIO.output(BIN2,rS<0)
 def on(pin):
-    if(pin > 0 and pin <= 40):
+    if((pin > 0) and (pin <= 40)):
         GPIO.output(pin, True)
+    else:
+        print("Invalid Pin: " + pin)
 def off(pin):
-    if(pin > 0 and pin <= 40):
+    if((pin > 0) and (pin <= 40)):
         GPIO.output(pin, False)
+    else:
+        print("Invalid Pin: " + pin)
 # -------------------------------------------------
 print("Just so that at least something is printed")
 try:
