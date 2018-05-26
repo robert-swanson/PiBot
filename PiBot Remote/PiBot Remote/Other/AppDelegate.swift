@@ -42,7 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 	}
 
 	func applicationWillTerminate(_ application: UIApplication) {
-		print("Terminating")
+		Console.log(text: "Terminating", level: .debug)
 		if(tabBar?.network.TCPConnected())!{
 			tabBar?.network.closeTCP()
 		}

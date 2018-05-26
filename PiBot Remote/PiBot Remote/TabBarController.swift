@@ -11,7 +11,6 @@ import UIKit
 extension UIViewController {
 	
 	func setTabBarHidden(_ hidden: Bool, animated: Bool = true, duration: TimeInterval = 0.3) {
-		print("hiding")
 		if animated {
 			if let frame = self.tabBarController?.tabBar.frame {
 				let factor: CGFloat = hidden ? 1 : -1
@@ -105,7 +104,7 @@ class TabBarController: UITabBarController, NetworkManagerDelegate {
 	}
 	
 	func receivedMessage(message: Message) {
-		print(message.toString())
+		Console.log(text: "Recieved Message: \(message)", level: .debug)
 		if message.type == .ping{
 			if network.ping == false {
 				network.send(message: Message(type: .ping))
@@ -138,7 +137,6 @@ class TabBarController: UITabBarController, NetworkManagerDelegate {
 		forwardAlert = UIAlertController(title: "Replaying History", message: "The robot is tracing the given path", preferredStyle: .alert)
 		forwardAlert?.addAction(UIAlertAction(title: "Stop", style: .cancel, handler: {UIAlertAction in self.network.send(message: Message(type: .stop))}))
 		present(forwardAlert!, animated: true, completion: {
-			print("now")
 			self.network.send(message: Message(type: .forward))
 		})
 	}
@@ -147,7 +145,6 @@ class TabBarController: UITabBarController, NetworkManagerDelegate {
 		backwardAlert = UIAlertController(title: "Rewinding History", message: "The robot is tracing the given path backwards", preferredStyle: .alert)
 		backwardAlert?.addAction(UIAlertAction(title: "Stop", style: .cancel, handler: {UIAlertAction in self.network.send(message: Message(type: .stop))}))
 		present(backwardAlert!, animated: true, completion: {
-			print("now")
 			self.network.send(message: Message(type: .backward))
 		})
 	}
@@ -164,11 +161,11 @@ class TabBarController: UITabBarController, NetworkManagerDelegate {
 		let clear = UIAlertAction(title: "Clear History", style: .default, handler: {UIAlertAction in self.network.send(message: Message(type: .clear))})
 
 		let restart = UIAlertAction(title: "Restart", style: .destructive, handler: {UIAlertAction in
-			print(self.network.sendSSHCommand(command: "sudo shutdown -r now", progressBar: nil))
+			_ = self.network.sendSSHCommand(command: "sudo shutdown -r now", progressBar: nil)
 			self.network.closeTCP()
 		})
 		let shutdown = UIAlertAction(title: "Shutdown", style: .destructive, handler: {UIAlertAction in
-			print(self.network.sendSSHCommand(command: "sudo shutdown now", progressBar: nil))
+			_ = self.network.sendSSHCommand(command: "sudo shutdown now", progressBar: nil)
 			self.network.closeTCP()
 		})
 		let cancel = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)

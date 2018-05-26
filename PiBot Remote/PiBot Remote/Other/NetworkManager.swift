@@ -31,6 +31,8 @@ class NetworkManager: NSObject {
 	private var indexOfMoveInstruction = -1
 	private var sendingInstruc = false
 	
+	public var lastMovementInstruc: [CGFloat] = [0.0,0.0]
+	
 	let settings = UserDefaults.standard
 	
 	public func getAddress() -> String{
@@ -62,12 +64,13 @@ class NetworkManager: NSObject {
 		return password
 	}
 	public func getPort() -> UInt32{
-		var port: UInt32 = 2000
-		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.port.toString()) as? UInt32{
-			port = val
+		var port: UInt32 = 2001
+		if let val = UserDefaults.standard.value(forKey: SettingsViewController.setting.port.toString()) as? String?{
+			port = UInt32(val!)!
 		}else{
-			UserDefaults.standard.set(port, forKey: SettingsViewController.setting.port.toString())
+			UserDefaults.standard.set("2001", forKey: SettingsViewController.setting.port.toString())
 		}
+		
 		return port
 	}
 	public func getAutoStartSSH() -> Bool{
@@ -116,7 +119,7 @@ class NetworkManager: NSObject {
 	}
 	
 	private func setupSSH() -> Bool{
-		print("Setting up SSH")
+		Console.log(text: "Setting up SSH", level: .advanced)
 		if(session == nil){
 			session = NMSSHSession(host: getAddress(), andUsername: getUsername())
 		}
@@ -144,7 +147,7 @@ class NetworkManager: NSObject {
 			return false
 		}
 		Thread(target: self, selector: #selector(clientThread), object: nil).start()
-		usleep(2000000)
+		usleep(1000000)
 		return true
 	}
 	
@@ -161,9 +164,10 @@ class NetworkManager: NSObject {
 					if(rv.count != 0){
 						Console.log(text: "SSH OUTPUT:\n \(rv)", level: .advanced)
 					}
+					Console.log(text: "SSH Output: \(rv)", level: .debug)
 					return rv
 				} catch {
-					print("\(error)")
+					Console.log(text: error as! String, level: .advanced)
 				}
 			}else{
 				Console.log(text: "SSH COMMAND ERRROR: Could not authenticate, check to make the password is correct", level: .basic)
@@ -176,12 +180,12 @@ class NetworkManager: NSObject {
 	
 	@objc private func clientThread(){
 		do {
-			let command = "python Desktop/PiBotRemoteFiles/server.py \(getPort()) \(getPinSettingString())"
-			print(command)
-			print("Starting Client")
-			try	print("---------Pi Output---------\n\((session?.channel.execute(command))!)---------------------------")
+			let command = "python /home/pi/Desktop/PiBotRemoteFiles/server.py \(getPort()) \(getPinSettingString())"
+			Console.log(text: command, level: .debug)
+			Console.log(text: "Starting Client", level: .advanced)
+			try	Console.log(text: "---------Pi Output---------\n\((session?.channel.execute(command))!)---------------------------",level: .debug)
 		} catch {
-			print("Client thread error: c\(error)")
+			Console.log(text: "Client thread error: c\(error)", level: .advanced)
 		}
 		if TCPConnected(){
 			closeTCP()
@@ -192,6 +196,7 @@ class NetworkManager: NSObject {
 		if((message.type == .move || message.type == .servo) && indexOfMoveInstruction != -1){
 			pendingInstructions.remove(at: indexOfMoveInstruction)
 			indexOfMoveInstruction = pendingInstructions.count
+			print("Removed Previous Instruc")
 		}else if(message.type == .move || message.type == .servo){
 			indexOfMoveInstruction = pendingInstructions.count
 		}
@@ -203,8 +208,19 @@ class NetworkManager: NSObject {
 	}
 	
 	@objc private func instrucLoop(){
+		if(lastMovementInstruc == [0.0,0.0]){
+			while(!pendingInstructions.isEmpty && pendingInstructions.first!.type == Message.MessType.move && pendingInstructions.first!.values == [0.0,0.0]){
+				pendingInstructions.removeFirst()
+				if(indexOfMoveInstruction != -1){
+					indexOfMoveInstruction -= 1
+				}
+			}
+		}
 		if(!pendingInstructions.isEmpty){
 			sendInstruc(message: pendingInstructions.first!)
+			if(pendingInstructions.first!.type == Message.MessType.move){
+				lastMovementInstruc = (pendingInstructions.first!.values!)
+			}
 			if(indexOfMoveInstruction != -1){
 				indexOfMoveInstruction -= 1
 			}
@@ -221,13 +237,13 @@ class NetworkManager: NSObject {
 	}
 	
 	private func sendInstruc(message: Message){
+		print("instruc finally sent")
 		if(message.type != Message.MessType.move && message.type != Message.MessType.servo && message.type != Message.MessType.stop){
 			Console.log(text: "SENDING MESSAGE: \(message.toString())", level: .debug)
 		}
 		if(TCPConnected()){
 			var data = (message.toString().trimmingCharacters(in: .whitespaces)+"$").data(using: .ascii)!
 			if(data.isEmpty || message.toString() == ""){
-				print("Empty: " + message.toString())
 				return
 			}
 			_ = data.withUnsafeBytes { outputStream.write($0, maxLength: data.count)}
@@ -301,7 +317,6 @@ class NetworkManager: NSObject {
 		rv += String(getSet(set: SettingsViewController.setting.Pin.connected, def: 37)) + " "
 		rv += String(getSet(set: SettingsViewController.setting.Pin.replaying, def: 38)) + " "
 		rv += String(getSet(set: SettingsViewController.setting.Pin.data, def: 40))
-		print(rv)
 		return rv
 	}
 }
@@ -309,13 +324,12 @@ extension NetworkManager: StreamDelegate {
 	func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
 		switch eventCode {
 		case Stream.Event.hasBytesAvailable:
-			print("received")
 			readAvailableBytes(stream: aStream as! InputStream)
 		case Stream.Event.endEncountered:
 			Console.log(text: "Closing Connection", level: .debug)
 			closeTCP()
 		case Stream.Event.errorOccurred:
-			print("ERROR: "+String(describing: eventCode))
+			Console.log(text: "ERROR: "+String(describing: eventCode), level: .advanced)
 			closeTCP()
 			Console.log(text: "Connection failed because TCP connection could not be made to \(getAddress()) on port \(getPort())", level: .basic)
 			tabBar.displayFailedConnectionAlert()

@@ -29,12 +29,10 @@
                                     <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
                                     <wkPreferences key="preferences"/>
                                 </wkWebViewConfiguration>
-                                <connections>
-                                    <outletCollection property="gestureRecognizers" destination="Hn9-Iy-sHF" appends="YES" id="ePH-1S-rUr"/>
-                                </connections>
                             </wkWebView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="T64-mK-EpB" firstAttribute="top" secondItem="e7Q-Oa-sm9" secondAttribute="top" id="67t-fC-MSo"/>
                             <constraint firstAttribute="trailing" secondItem="T64-mK-EpB" secondAttribute="trailing" id="CNM-ps-WPL"/>
@@ -49,11 +47,6 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="pcv-w7-ITf" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                <tapGestureRecognizer id="Hn9-Iy-sHF">
-                    <connections>
-                        <outlet property="delegate" destination="wwr-tR-1UT" id="7hO-Kg-K2J"/>
-                    </connections>
-                </tapGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="-572.46376811594212" y="576.35869565217399"/>
         </scene>
@@ -114,7 +107,7 @@
                                     </mask>
                                 </variation>
                             </skView>
-                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="5.5" minValue="1.8" maxValue="8" translatesAutoresizingMaskIntoConstraints="NO" id="3y4-An-1cw">
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="6.46" minValue="1" maxValue="15" translatesAutoresizingMaskIntoConstraints="NO" id="3y4-An-1cw">
                                 <rect key="frame" x="14" y="283" width="708" height="30"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="29" id="zeH-rf-7Pq"/>

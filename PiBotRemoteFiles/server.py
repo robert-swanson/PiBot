@@ -9,7 +9,7 @@ except:
     print("Not Pi")
 
 # Conection
-port = 4000
+port = 2000
 ping = False
 s = None
 c = None
@@ -119,7 +119,7 @@ def netLoop():
                 return
 
 def interpret(input):
-    print("Interpreting: "+input)
+    # print("Interpreting: "+input)
     on(data)
     if input == b'':
         return True
@@ -194,6 +194,7 @@ def addEventToHistory(l,r):
         history[len(history)-2].append(dur)
     timer = time.time()
 def playForward():
+    print history
     global stop
     on(replaying)
     stop = False
@@ -296,5 +297,6 @@ try:
 finally:
     try:
         off(connected)
+        off(data)
         GPIO.cleanup()
     except: pass

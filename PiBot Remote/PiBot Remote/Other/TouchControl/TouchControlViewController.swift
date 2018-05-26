@@ -81,6 +81,7 @@ class TouchControlViewController: UIViewController, DPadDelegate {
 	}
 	@IBAction func servoChanged(_ sender: Any) {
 		tabView?.network.send(message: Message(servoValue: CGFloat(servo.value)))
+		print(servo.value)
 	}
 	
 	@IBAction func toggleConnect(_ sender: Any) {

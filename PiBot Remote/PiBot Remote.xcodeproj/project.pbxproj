@@ -10,6 +10,7 @@
 		EB1B34802055E47E006BBE92 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB1B34702055DF0A006BBE92 /* NMSSH.framework */; };
 		EB1B34812055E47E006BBE92 /* NMSSH.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = EB1B34702055DF0A006BBE92 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		EB60177B20A7952D0006625C /* SwitchCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB60177A20A7952D0006625C /* SwitchCell.swift */; };
+		EB831F3F20B896AF00A5294F /* ForceTouchGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB831F3E20B896AF00A5294F /* ForceTouchGestureRecognizer.swift */; };
 		EB9DCF962045CA7300776D04 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EB9DCF952045CA7300776D04 /* Launch Screen.storyboard */; };
 		EB9FA8052047681300AF0FC4 /* DPad.sks in Resources */ = {isa = PBXBuildFile; fileRef = EB9FA8042047681300AF0FC4 /* DPad.sks */; };
 		EB9FA8072047687600AF0FC4 /* DPadScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB9FA8062047687600AF0FC4 /* DPadScene.swift */; };
@@ -46,6 +47,7 @@
 		EB1B34732055E1AF006BBE92 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		EB1B34752055E1D0006BBE92 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		EB60177A20A7952D0006625C /* SwitchCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchCell.swift; sourceTree = "<group>"; };
+		EB831F3E20B896AF00A5294F /* ForceTouchGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForceTouchGestureRecognizer.swift; sourceTree = "<group>"; };
 		EB9DCF952045CA7300776D04 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		EB9FA8042047681300AF0FC4 /* DPad.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = DPad.sks; sourceTree = "<group>"; };
 		EB9FA8062047687600AF0FC4 /* DPadScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DPadScene.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 				EBB8D7CC2044F57600AC738F /* NetworkManager.swift */,
 				EBB8D7BA2044F54200AC738F /* AppDelegate.swift */,
 				EBE5E5C5209FB6330058067F /* Console.swift */,
+				EB831F3E20B896AF00A5294F /* ForceTouchGestureRecognizer.swift */,
 			);
 			path = Other;
 			sourceTree = "<group>";
@@ -232,6 +235,7 @@
 				EBB8D7BD2044F54200AC738F /* Dashboard.swift in Sources */,
 				EBCE8C12207861C7006D4866 /* SegmentedCell.swift in Sources */,
 				EBB8D7BB2044F54200AC738F /* AppDelegate.swift in Sources */,
+				EB831F3F20B896AF00A5294F /* ForceTouchGestureRecognizer.swift in Sources */,
 				EBCE8C0F20785B47006D4866 /* SettingsViewController.swift in Sources */,
 				EB9FA82D2047B2F400AF0FC4 /* TouchControlViewController.swift in Sources */,
 				EB9FA8072047687600AF0FC4 /* DPadScene.swift in Sources */,

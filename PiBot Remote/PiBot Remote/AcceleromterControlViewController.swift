@@ -10,13 +10,17 @@ import UIKit
 import WebKit
 import CoreMotion
 
-class AcceleromterControlViewController: UIViewController, WKNavigationDelegate, UIGestureRecognizerDelegate {
+class AcceleromterControlViewController: UIViewController, WKNavigationDelegate, UIGestureRecognizerDelegate, WKUIDelegate {
+	// MARK: - Paramaters
 	var network: NetworkManager?
 	var tabView: TabBarController?
 	@IBOutlet weak var webView: WKWebView!
 	var url: URL? = nil
 	var tabBarHide: Timer?
 	var zero: [Double] = [0,0,0]
+	
+	var camAng: CGFloat = 8.25
+	var longStart: CGPoint?
 	
 	@objc var track = false
 	var calibrateNext = false
@@ -25,6 +29,7 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 	
 	var toggleStop = false
 	
+	// MARK: - View
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		tabView = self.parent as? TabBarController
@@ -34,85 +39,77 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 		Console.log(text: "Attempting to stream camera feed from \(url!)", level: .advanced)
 		webView.load(URLRequest(url: url!))
 		webView.navigationDelegate = self
+		webView.uiDelegate = self
 		
-//		let calibrateTap = UITapGestureRecognizer(target: self, action: #selector(calibrate))
-		let stopTap = UITapGestureRecognizer(target: self, action: #selector(toggle))
-		let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(tapr))
+		let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(swipe))
 		let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(hide))
-		let longPress = UILongPressGestureRecognizer(target: self, action: #selector(calibrate))
-		
-		longPress.numberOfTouchesRequired = 2
-
 		swipeUp.direction = UISwipeGestureRecognizerDirection.up
 		swipeDown.direction = UISwipeGestureRecognizerDirection.down
-		
-		stopTap.numberOfTapsRequired = 1
-		stopTap.numberOfTouchesRequired = 3
-		
-//		calibrateTap.delegate = self
-		longPress.delegate = self
-		stopTap.delegate = self
 		swipeUp.delegate = self
 		swipeDown.delegate = self
 		
-//		view.addGestureRecognizer(calibrateTap)
+		let longPress = UILongPressGestureRecognizer(target: self, action: #selector(long))
+		let stopTap = UITapGestureRecognizer(target: self, action: #selector(toggle))
+		longPress.numberOfTouchesRequired = 2
+		longPress.delegate = self
+		stopTap.numberOfTapsRequired = 2
+		stopTap.numberOfTouchesRequired = 2
+		stopTap.delegate = self
+		
 		view.addGestureRecognizer(stopTap)
 		view.addGestureRecognizer(swipeUp)
 		view.addGestureRecognizer(swipeDown)
 		view.addGestureRecognizer(longPress)
 	}
 	
+	@objc func long(_ sender: UILongPressGestureRecognizer) {
+		switch sender.state {
+		case .began:
+			calibrate()
+			longStart = sender.location(in: webView)
+			let impulse = UIImpactFeedbackGenerator(style: .light)
+			impulse.impactOccurred()
+		case .ended:
+			let current = sender.location(in: webView)
+			var newAng = camAng + ((longStart?.y)! - current.y)/100
+			if(newAng > 11.5){
+				newAng = 11.5
+			}else if(newAng < 5){
+				newAng = 5
+			}
+			camAng = newAng
+			print("End Cam Ang: \(camAng)")
+			network?.send(message: Message(servoValue: newAng))
+		default:
+			return
+		}
+	}
 	
-	
-	@objc func tapr(){
+	@objc func swipe(){
 		if(tabBarHide != nil){
 			tabBarHide?.fire()
 			tabBarHide = nil
 		}else{
-			show()
+			setTabBarHidden(false)
 			tabBarHide = Timer.scheduledTimer(timeInterval: TimeInterval(3), target: self, selector: #selector(hide), userInfo: nil, repeats: false)
 		}
 	}
 	
 	@objc func hide(){
-		if(tabView?.selectedIndex == 1){
-			tabBarHide = nil
-			setTabBarHidden(true)
-		}
-	}
-	func show(){
-		setTabBarHidden(false)
+		setTabBarHidden(true)
 	}
 	
 	func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
 		return true
 	}
 	
-	@objc func calibrate(){
-		calibrateNext = true
-		print("Calibrate")
-	}
-	
 	@objc func toggle(){
 		if(!toggleStop){
 			stop()
+			let impulse = UIImpactFeedbackGenerator(style: .heavy)
+			impulse.impactOccurred()
 		}
 		toggleStop = !toggleStop
-	}
-	
-	@objc func stop(){
-		network?.send(message: Message(type: .stop))
-		print("stop")
-	}
-	
-	override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-		let touch = touches.first
-		Thread(target: self, selector: #selector(getter: track), object: touch).start()
-		print("touch")
-	}
-	
-	override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-		track = false
 	}
 	
 	override func viewDidAppear(_ animated: Bool) {
@@ -122,27 +119,15 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 	}
 	
 	override func viewDidDisappear(_ animated: Bool) {
-		print("should stop")
 		motion.stopGyroUpdates()
 		motion.stopDeviceMotionUpdates()
+		tabBarHide?.invalidate()
 		usleep(1000)
 		stop()
 	}
 	
-	func startMotion () {
-		motion.deviceMotionUpdateInterval = 0.1
-		motion.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {
-			(data, error) in
-//			print("Roll: \(String(describing: data?.attitude.roll)), Pitch: \(String(describing: data?.attitude.pitch)), Yaw: \(String(describing: data?.attitude.pitch))")
-//			print(String(format: "Roll: %.2f, Pitch: %.2f, Yaw: %.2f", (data?.attitude.roll)!-self.zero[0], (data?.attitude.pitch)!-zero[1], (data?.attitude.yaw)!-zero[2]))
-			self.updateInstruc(att: (data?.attitude)!)
-			
-		})
-	}
-	
 	func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-		print("Authenticating with RPi Cam Control")
-		print(challenge.protectionSpace.host)
+		Console.log(text: "Authenticating with RPi Cam Control", level: .advanced)
 		if challenge.protectionSpace.host == network?.getAddress() {
 			let user = network!.getUsername()
 			let password = network!.getPassword()
@@ -152,6 +137,32 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 		}
 	}
 	
+	override func didReceiveMemoryWarning() {
+		super.didReceiveMemoryWarning()
+		// Dispose of any resources that can be recreated.
+	}
+	
+	// MARK: - Movement
+	func calibrate(){
+		calibrateNext = true
+	}
+	
+	@objc func stop(){
+		network?.send(message: Message(type: .stop))
+		print("stop")
+	}
+	
+	
+	
+	func startMotion () {
+		motion.deviceMotionUpdateInterval = 0.1
+		motion.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {
+			(data, error) in
+			self.updateInstruc(att: (data?.attitude)!)
+			
+		})
+	}
+	
 	func updateInstruc(att: CMAttitude){
 		var roll = att.roll
 		var pitch = att.pitch
@@ -159,7 +170,6 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 		
 		if(calibrateNext){
 			zero = [roll, pitch,yaw]
-			print(zero)
 			calibrateNext = false
 			print("-------Calibrated!---------")
 		}
@@ -181,26 +191,20 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 		if(toggleStop){
 			return
 		}
-		
-//		print("\(left) \(right)")
-		
-			
-//		print(String(format: "Roll: %.2f, Pitch: %.2f, Yaw: %.2f", roll, pitch, yaw))
-
-		
+		if(abs(left) < 0.05){
+			left = 0
+		}
+		if(abs(right) < 0.05){
+			right = 0
+		}
+		if(left == 0 && right == 0 && network?.lastMovementInstruc == [0.0, 0.0]){
+			return
+		}
 		network?.send(message: Message(leftSpeed: CGFloat(left), rightSpeed: CGFloat(right)))
-
-	}
-	
-	
-	override func didReceiveMemoryWarning() {
-		super.didReceiveMemoryWarning()
-		// Dispose of any resources that can be recreated.
 	}
 	
 	
 	/*
-	// MARK: - Navigation
 	
 	// In a storyboard-based application, you will often want to do a little preparation before navigation
 	override func prepare(for segue: UIStoryboardSegue, sender: Any?) {

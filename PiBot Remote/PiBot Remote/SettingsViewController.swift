@@ -158,7 +158,7 @@ class SettingsViewController: UITableViewController{
 			}
 		case (1,3):
 			title = "Port"
-			if let port = settings.value(forKey: SettingsViewController.setting.port.toString()) as! UInt32?{
+			if let port = settings.value(forKey: SettingsViewController.setting.port.toString()) as! String?{
 				data = "\(port)"
 			}else{
 				data = "2000"
@@ -228,9 +228,9 @@ class SettingsViewController: UITableViewController{
 			askSetting(withTitle: "Password", message: "Insert the password of your pi's account", settingKey: setting.password.toString(), numpad: false, pass: true, index: indexPath)
 		case (1,3):
 			askSetting(withTitle: "Port", message: "Be sure this port is not being used by another operation", settingKey: SettingsViewController.setting.port.toString(), numpad: true, pass: false, index: indexPath)
-		case (2,2):
+		case (2,0):
 			performTask(withCode: 0, title: "Setting Network to AdHoc", message: "This may take a moment")
-		case (2,3):
+		case (2,1):
 			performTask(withCode: 1, title: "Setting Network to Wifi", message: "This may take a moment")
 		case (3,0):
 			askSetting(withTitle: "Left Speed", message: pinMess1, settingKey: setting.Pin.PWMA.toString(), numpad: true, pass: false, index: indexPath)
@@ -295,20 +295,28 @@ class SettingsViewController: UITableViewController{
 		var newMessage: String?
 		
 		if(withCode == 0){
-			if(network?.sendSSHCommand(command: "sudo bash Desktop/adhoc.sh", progressBar: nil).starts(with: "before: # wifi"))!{
+			let result = network?.sendSSHCommand(command: "sudo bash Desktop/PiBotRemoteFiles/adhoc.sh", progressBar: nil)
+			if(result?.trimmingCharacters(in: .whitespaces).starts(with: "before: # wifi"))!{
 				newMessage = "The change was succesful, however it will not take affect until you restart the robot"
 				newTitle = "Success"
-			}else{
+			}else if(result?.trimmingCharacters(in: .whitespaces).starts(with: "before: # adhoc"))!{
 				newMessage = "The robot was already set to an adhoc"
 				newTitle = "No Change"
+			}else{
+				newMessage = "Unable to execute the command via SSH"
+				newTitle = "Error"
 			}
 		}else{
-			if((network?.sendSSHCommand(command: "sudo bash Desktop/wifi.sh", progressBar: nil))?.starts(with: "before: # adhoc"))!{
+			let result = network?.sendSSHCommand(command: "sudo bash Desktop/PiBotRemoteFiles/wifi.sh", progressBar: nil)
+			if(result?.trimmingCharacters(in: .whitespaces).starts(with: "before: # adhoc"))!{
 				newMessage = "The change was succesful, however it will not take affect until you restart the robot"
 				newTitle = "Success"
-			}else{
+			}else if(result?.trimmingCharacters(in: .whitespaces).starts(with: "before: # wifi"))!{
 				newMessage = "The robot was already set to a wifi"
 				newTitle = "No Change"
+			}else{
+				newMessage = "Unable to execute the command via SSH"
+				newTitle = "Error"
 			}
 		}
 		let newAlert = UIAlertController(title: newTitle, message: newMessage, preferredStyle: .alert)
