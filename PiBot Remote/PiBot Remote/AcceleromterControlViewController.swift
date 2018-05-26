@@ -27,7 +27,7 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 	
 	let motion = CMMotionManager()
 	
-	var toggleStop = false
+	var toggleStop = true
 	
 	// MARK: - View
 	override func viewDidLoad() {
@@ -40,6 +40,7 @@ class AcceleromterControlViewController: UIViewController, WKNavigationDelegate,
 		webView.load(URLRequest(url: url!))
 		webView.navigationDelegate = self
 		webView.uiDelegate = self
+		toggleStop = true
 		
 		let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(swipe))
 		let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(hide))
